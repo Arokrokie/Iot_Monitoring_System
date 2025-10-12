@@ -1,0 +1,265 @@
+{% extends 'sensors/base.html' %}
+
+{% block page_title %}History{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="device" class="form-label">Device</label>
+                <select name="device" id="device" class="form-select">
+                    <option value="">All Devices</option>
+                    {% for device in device_list %}
+                    <option value="{{ device }}" {% if selected_device == device %}selected{% endif %}>{{ device }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">From Date</label>
+                <input type="date" name="date_from" id="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">To Date</label>
+                <input type="date" name="date_to" id="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                    <a href="{% url 'history' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Export Options -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-download"></i> Export Data</h6>
+                <p class="card-text text-muted">Download historical data in various formats</p>
+                <div class="btn-group">
+                    <a href="?export=csv{% if selected_device %}&device={{ selected_device }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                       class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </a>
+                    <a href="?export=json{% if selected_device %}&device={{ selected_device }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                       class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-file-code"></i> JSON
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-chart-line"></i> Quick Stats</h6>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h5 class="text-primary">{{ total_readings }}</h5>
+                        <small class="text-muted">Total</small>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-success">{{ avg_temp|floatformat:1 }}°C</h5>
+                        <small class="text-muted">Avg Temp</small>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-info">{{ avg_humidity|floatformat:1 }}%</h5>
+                        <small class="text-muted">Avg Humidity</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historical Data Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-history"></i> Historical Data</h5>
+        <div>
+            <span class="badge bg-info">{{ readings|length }} records</span>
+            {% if selected_device %}
+            <span class="badge bg-secondary">{{ selected_device }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Device</th>
+                        <th>Temperature</th>
+                        <th>Humidity</th>
+                        <th>Battery</th>
+                        <th>Motion</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reading in readings %}
+                    <tr>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="fw-bold">{{ reading.received_at|date:"M d, Y" }}</span>
+                                <small class="text-muted">{{ reading.received_at|date:"H:i:s" }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <i class="fas fa-microchip"></i> {{ reading.device_id }}
+                        </td>
+                        <td>
+                            {% if reading.temperature_c %}
+                                <span class="badge bg-info">{{ reading.temperature_c }}°C</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if reading.humidity %}
+                                <span class="badge bg-primary">{{ reading.humidity }}%</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if reading.battery_voltage %}
+                                {% if reading.battery_voltage > 3.5 %}
+                                    <span class="badge bg-success">{{ reading.battery_voltage }}V</span>
+                                {% elif reading.battery_voltage > 3.0 %}
+                                    <span class="badge bg-warning">{{ reading.battery_voltage }}V</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ reading.battery_voltage }}V</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if reading.motion_counts %}
+                                <span class="badge bg-secondary">{{ reading.motion_counts }}</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" onclick="showReadingDetails({{ reading.id }})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-database fa-2x mb-2"></i>
+                            <div>No historical data found</div>
+                            <small>Try adjusting your filters or check if devices are sending data</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if readings %}
+    <div class="card-footer">
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                Showing {{ readings|length }} of {{ total_count }} records
+            </small>
+            {% if readings.has_other_pages %}
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if readings.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ readings.previous_page_number }}{% if selected_device %}&device={{ selected_device }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">{{ readings.number }} of {{ readings.paginator.num_pages }}</span>
+                    </li>
+                    
+                    {% if readings.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ readings.next_page_number }}{% if selected_device %}&device={{ selected_device }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Reading Details Modal -->
+<div class="modal fade" id="readingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reading Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="readingDetails">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showReadingDetails(readingId) {
+    // This would fetch and display detailed reading information
+    fetch(`/api/reading/${readingId}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('readingDetails').innerHTML = `
+                <div class="row">
+                    <div class="col-6"><strong>Device:</strong></div>
+                    <div class="col-6">${data.device_id}</div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><strong>Temperature:</strong></div>
+                    <div class="col-6">${data.temperature_c || '--'}°C</div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><strong>Humidity:</strong></div>
+                    <div class="col-6">${data.humidity || '--'}%</div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><strong>Battery:</strong></div>
+                    <div class="col-6">${data.battery_voltage || '--'}V</div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><strong>Motion:</strong></div>
+                    <div class="col-6">${data.motion_counts || '--'}</div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><strong>Received:</strong></div>
+                    <div class="col-6">${new Date(data.received_at).toLocaleString()}</div>
+                </div>
+            `;
+            new bootstrap.Modal(document.getElementById('readingModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('readingDetails').innerHTML = '<p class="text-danger">Error loading reading details</p>';
+            new bootstrap.Modal(document.getElementById('readingModal')).show();
+        });
+}
+</script>
+{% endblock %}

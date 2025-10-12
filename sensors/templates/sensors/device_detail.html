@@ -1,0 +1,219 @@
+{% extends 'sensors/base.html' %}
+
+{% block page_title %}{{ device_id }} - Device Details{% endblock %}
+
+{% block content %}
+<!-- Device Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1">
+                            <i class="fas fa-microchip"></i> {{ device_id }}
+                        </h4>
+                        <p class="text-muted mb-0">Device Details & Performance</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="status-indicator {% if latest %}status-online{% else %}status-offline{% endif %}"></span>
+                        <span class="badge {% if latest %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if latest %}Online{% else %}Offline{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Device Metrics -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-database fa-2x mb-2"></i>
+                <div class="metric-value">{{ total_readings }}</div>
+                <div class="small">Total Readings</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-thermometer-half fa-2x mb-2"></i>
+                <div class="metric-value">{{ latest.temperature_c|default:"--" }}°C</div>
+                <div class="small">Latest Temperature</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-tint fa-2x mb-2"></i>
+                <div class="metric-value">{{ latest.humidity|default:"--" }}%</div>
+                <div class="small">Latest Humidity</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-battery-full fa-2x mb-2"></i>
+                <div class="metric-value">{{ latest.battery_voltage|default:"--" }}V</div>
+                <div class="small">Battery Level</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Device Charts -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Temperature Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tempChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-area"></i> Humidity Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="humidityChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Readings -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-history"></i> Recent Readings</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Time</th>
+                        <th>Temperature</th>
+                        <th>Humidity</th>
+                        <th>Battery</th>
+                        <th>Motion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reading in readings %}
+                    <tr>
+                        <td>{{ reading.received_at|date:"M d, H:i:s" }}</td>
+                        <td>
+                            {% if reading.temperature_c %}
+                                <span class="badge bg-info">{{ reading.temperature_c }}°C</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if reading.humidity %}
+                                <span class="badge bg-primary">{{ reading.humidity }}%</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if reading.battery_voltage %}
+                                {% if reading.battery_voltage > 3.5 %}
+                                    <span class="badge bg-success">{{ reading.battery_voltage }}V</span>
+                                {% elif reading.battery_voltage > 3.0 %}
+                                    <span class="badge bg-warning">{{ reading.battery_voltage }}V</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ reading.battery_voltage }}V</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if reading.motion_counts %}
+                                <span class="badge bg-secondary">{{ reading.motion_counts }}</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="fas fa-database fa-2x mb-2"></i>
+                            <div>No readings available for this device</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Temperature chart
+const tempCtx = document.getElementById('tempChart').getContext('2d');
+const tempData = [{% for reading in readings|slice:":20" %}{% if reading.temperature_c %}{{ reading.temperature_c }}{% else %}null{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}];
+const tempLabels = [{% for reading in readings|slice:":20" %}"{{ reading.received_at|date:"H:i" }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+
+new Chart(tempCtx, {
+    type: 'line',
+    data: {
+        labels: tempLabels,
+        datasets: [{
+            label: 'Temperature (°C)',
+            data: tempData,
+            borderColor: '#ff6b6b',
+            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: { beginAtZero: false }
+        }
+    }
+});
+
+// Humidity chart
+const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+const humidityData = [{% for reading in readings|slice:":20" %}{% if reading.humidity %}{{ reading.humidity }}{% else %}null{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}];
+const humidityLabels = [{% for reading in readings|slice:":20" %}"{{ reading.received_at|date:"H:i" }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+
+new Chart(humidityCtx, {
+    type: 'line',
+    data: {
+        labels: humidityLabels,
+        datasets: [{
+            label: 'Humidity (%)',
+            data: humidityData,
+            borderColor: '#4ecdc4',
+            backgroundColor: 'rgba(78, 205, 196, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: { beginAtZero: true, max: 100 }
+        }
+    }
+});
+</script>
+{% endblock %}

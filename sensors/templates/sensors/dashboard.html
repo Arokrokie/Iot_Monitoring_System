@@ -1,0 +1,249 @@
+{% extends 'sensors/base.html' %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Metrics Cards -->
+<div class="row">
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-thermometer-half fa-2x mb-2"></i>
+                <div class="metric-value">{{ latest_temp|default:"--" }}°C</div>
+                <div class="small">Latest Temperature</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-tint fa-2x mb-2"></i>
+                <div class="metric-value">{{ latest_humidity|default:"--" }}%</div>
+                <div class="small">Latest Humidity</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-battery-full fa-2x mb-2"></i>
+                <div class="metric-value">{{ latest_battery|default:"--" }}V</div>
+                <div class="small">Battery Level</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-running fa-2x mb-2"></i>
+                <div class="metric-value">{{ latest_motion|default:"--" }}</div>
+                <div class="small">Motion Count</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Device Status Card -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-microchip"></i> Device Status Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-end py-2">
+                            <h4 class="text-primary mb-1">{{ device_status.total }}</h4>
+                            <small class="text-muted">Total Devices</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end py-2">
+                            <h4 class="text-success mb-1">{{ device_status.online }}</h4>
+                            <small class="text-muted">Online</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end py-2">
+                            <h4 class="text-danger mb-1">{{ device_status.offline }}</h4>
+                            <small class="text-muted">Offline</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="py-2">
+                            <h4 class="text-info mb-1">{{ device_status.uptime_percentage }}%</h4>
+                            <small class="text-muted">Uptime</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Temperature Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tempChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-area"></i> Humidity Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="humidityChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Readings Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-table"></i> Recent Readings</h5>
+        <span class="badge bg-success">Auto-refreshing</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Time</th>
+                        <th>Device</th>
+                        <th>Temperature</th>
+                        <th>Humidity</th>
+                        <th>Battery</th>
+                        <th>Motion</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="readingsTable">
+                    {% for r in readings %}
+                    <tr>
+                        <td>{{ r.received_at|date:"M d, H:i" }}</td>
+                        <td><i class="fas fa-microchip"></i> {{ r.device_id }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ r.temperature_c|default:"--" }}°C</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">{{ r.humidity|default:"--" }}%</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning">{{ r.battery_voltage|default:"--" }}V</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ r.motion_counts|default:"--" }}</span>
+                        </td>
+                        <td>
+                            <span class="status-indicator status-online"></span>Online
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No readings available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ temp_labels|json_script:"tempLabelsData" }}
+{{ temp_data|json_script:"tempData" }}
+{{ humidity_labels|json_script:"humidityLabelsData" }}
+{{ humidity_data|json_script:"humidityData" }}
+
+<script>
+// Auto-refresh functionality
+async function refreshData() {
+    try {
+        const res = await fetch(window.location.href, { 
+            headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+        });
+        const html = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const tbody = doc.querySelector('#readingsTable');
+        const current = document.querySelector('#readingsTable');
+        if (tbody && current) current.replaceWith(tbody);
+    } catch (e) { 
+        console.error('Refresh error:', e); 
+    }
+}
+
+// Charts
+const tempCtx = document.getElementById('tempChart').getContext('2d');
+const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+
+const tempLabels = JSON.parse(document.getElementById('tempLabelsData').textContent || '[]');
+const tempData = JSON.parse(document.getElementById('tempData').textContent || '[]');
+const humidityLabels = JSON.parse(document.getElementById('humidityLabelsData').textContent || '[]');
+const humidityData = JSON.parse(document.getElementById('humidityData').textContent || '[]');
+
+const tempChart = new Chart(tempCtx, {
+    type: 'line',
+    data: {
+        labels: tempLabels,
+        datasets: [{
+            label: 'Temperature (°C)',
+            data: tempData,
+            borderColor: '#ff6b6b',
+            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: { beginAtZero: false }
+        }
+    }
+});
+
+const humidityChart = new Chart(humidityCtx, {
+    type: 'line',
+    data: {
+        labels: humidityLabels,
+        datasets: [{
+            label: 'Humidity (%)',
+            data: humidityData,
+            borderColor: '#4ecdc4',
+            backgroundColor: 'rgba(78, 205, 196, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: { beginAtZero: true, max: 100 }
+        }
+    }
+});
+// Debug: log chart data to console to help diagnose rendering issues
+if (window && window.console) {
+    console.debug('Chart.js version:', Chart ? Chart.version : 'Chart undefined');
+    console.debug('tempLabels:', tempLabels);
+    console.debug('tempData length:', tempData.length, 'sample:', tempData.slice(-5));
+    console.debug('humidityLabels:', humidityLabels);
+    console.debug('humidityData length:', humidityData.length, 'sample:', humidityData.slice(-5));
+}
+// Auto-refresh every 10 seconds
+setInterval(refreshData, 10000);
+</script>
+{% endblock %}
+
+

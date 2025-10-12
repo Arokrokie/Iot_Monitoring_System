@@ -1,0 +1,167 @@
+{% extends 'sensors/base.html' %}
+
+{% block page_title %}Devices{% endblock %}
+
+{% block content %}
+<!-- Device Status Overview -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-microchip fa-2x mb-2"></i>
+                <div class="metric-value">{{ total_readings }}</div>
+                <div class="small">Total Cumulative Readings</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <div class="metric-value">{{ online_devices }}</div>
+                <div class="small">Devices Online</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                <div class="metric-value">{{ offline_devices }}</div>
+                <div class="small">Devices Offline</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Connected Devices Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-microchip"></i> Connected Devices Last Readings</h5>
+        <span class="badge bg-info">{{ devices|length }} devices readings</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Device ID</th>
+                        <th>Status</th>
+                        <th>Last 5</th>
+                        <th>Temperature</th>
+                        <th>Humidity</th>
+                        <th>Battery</th>
+                        <th>Motion</th>
+                        <th>Last Seen</th>
+                        <th>Readings</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-microchip me-2 text-primary"></i>
+                                <strong>{{ device.device_id }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-indicator {% if device.is_online %}status-online{% else %}status-offline{% endif %}"></span>
+                            <span class="badge {% if device.is_online %}bg-success{% else %}bg-danger{% endif %}">
+                                {% if device.is_online %}Online{% else %}Offline{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if device.latest_temp %}
+                                <span class="badge bg-info">{{ device.latest_temp }}°C</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if device.last_readings %}
+                                <div class="d-flex flex-column">
+                                    {% for r in device.last_readings %}
+                                    <small class="text-muted">{{ r.received_at|date:"H:i" }} - {{ r.temperature_c|default:"--" }}°C</small>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if device.latest_humidity %}
+                                <span class="badge bg-primary">{{ device.latest_humidity }}%</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if device.latest_battery %}
+                                {% if device.latest_battery > 3.5 %}
+                                    <span class="badge bg-success">{{ device.latest_battery }}V</span>
+                                {% elif device.latest_battery > 3.0 %}
+                                    <span class="badge bg-warning">{{ device.latest_battery }}V</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ device.latest_battery }}V</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if device.latest_motion %}
+                                <span class="badge bg-secondary">{{ device.latest_motion }}</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if device.last_seen %}
+                                <small class="text-muted">{{ device.last_seen|timesince }} ago</small>
+                            {% else %}
+                                <span class="text-muted">Never</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="badge bg-primary">{{ device.reading_count }}</span>
+                                <small class="text-muted">{{ device.today_readings }} today</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'device_detail' device.device_id %}" class="btn btn-outline-primary" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'history' %}?device={{ device.device_id }}" class="btn btn-outline-info" title="View History">
+                                    <i class="fas fa-history"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-5">
+                            <i class="fas fa-microchip fa-3x mb-3"></i>
+                            <div><h5>No devices found</h5></div>
+                            <p>Devices will appear here once they start sending data.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showDeviceHistory(deviceId) {
+    // This would open a modal or redirect to device history
+    window.location.href = `/device/${deviceId}/history/`;
+}
+</script>
+{% endblock %}
