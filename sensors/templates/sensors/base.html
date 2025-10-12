@@ -18,6 +18,8 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             z-index: 1000;
             overflow-y: auto;
+            /* subtle right shadow to separate from content */
+            box-shadow: 6px 0 20px rgba(0,0,0,0.06);
         }
         .sidebar .nav-link {
             color: rgba(255,255,255,0.8);
@@ -35,17 +37,37 @@
             margin-left: 250px;
             background: #f8f9fa;
             min-height: 100vh;
-            padding: 20px 30px;
+            /* more breathing room around pages */
+            padding: 30px 50px;
+            /* extra left padding and divider to visually separate from sidebar */
+            padding-left: 70px;
+            border-left: 1px solid rgba(0,0,0,0.03);
         }
         
         @media (max-width: 767.98px) {
-          .main-content { margin-left: 0; padding: 15px; }
+                    .main-content { margin-left: 0; padding: 15px; border-left: none; box-shadow: none; }
         }
         
         .content-wrapper {
             max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 15px;
+            /* add vertical margin to separate page edges from header/footer */
+            margin: 24px auto;
+            padding: 20px 18px;
+        }
+
+        /* utility to give clear vertical spacing for page blocks */
+        .page-section {
+            margin: 20px 0;
+            padding: 12px 0;
+        }
+
+        /* Page header alignment so the title lines up with content-wrapper */
+        .page-header {
+            max-width: 1200px;
+            margin: 0 auto 8px auto;
+            padding: 0 18px;
+            box-sizing: border-box;
+            width: 100%;
         }
         .card {
             border: none;
@@ -272,7 +294,7 @@
 
             <!-- Main content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom page-header">
                     <h1 class="h2">{% block page_title %}Dashboard{% endblock %}</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
