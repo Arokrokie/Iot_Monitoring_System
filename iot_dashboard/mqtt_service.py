@@ -1,3 +1,4 @@
+import os
 import paho.mqtt.client as mqtt
 import json
 import time
@@ -15,12 +16,15 @@ def start_mqtt_listener():
     logger.info("🚀 Starting MQTT listener...")
     print("🚀 Starting MQTT listener...")
 
-    # Configuration
-    broker = "eu1.cloud.thethings.network"
-    port = 1883
-    username = "bd-test-app2@ttn"
-    password = "NNSXS.NGFSXX4UXDX55XRIDQZS6LPR4OJXKIIGSZS56CQ.6O4WUAUHFUAHSTEYRWJX6DDO7TL2IBLC7EV2LS4EHWZOOEPCEUOA"
-    device_id = "lht65n-01-temp-humidity-sensor"
+    # Configuration (respect environment variables for deployment)
+    broker = os.getenv("TTN_BROKER", "eu1.cloud.thethings.network")
+    port = int(os.getenv("TTN_PORT", "1883"))
+    username = os.getenv("TTN_USERNAME", "bd-test-app2@ttn")
+    password = os.getenv(
+        "TTN_PASSWORD",
+        "NNSXS.NGFSXX4UXDX55XRIDQZS6LPR4OJXKIIGSZS56CQ.6O4WUAUHFUAHSTEYRWJX6DDO7TL2IBLC7EV2LS4EHWZOOEPCEUOA",
+    )
+    device_id = os.getenv("TTN_DEVICE_ID", "lht65n-01-temp-humidity-sensor")
     topic = f"v3/{username}/devices/{device_id}/up"
 
     def get_historical_sensor_data():
@@ -112,12 +116,16 @@ def start_mqtt_listener():
             logger.info(f"📊 Sensor data: {data}")
             print(f"📊 Sensor data: {data}")
 
-            # Try different API endpoints
-            api_urls = [
-                "http://localhost:8000/api/ingest/",
-                "http://127.0.0.1:8000/api/ingest/",
-                "/api/ingest/",
-            ]
+            # Post to ingest endpoint — prefer a configured deploy URL
+            ingest_url = os.getenv("IOT_INGEST_URL")
+            if ingest_url:
+                api_urls = [ingest_url]
+            else:
+                api_urls = [
+                    "http://localhost:8000/api/ingest/",
+                    "http://127.0.0.1:8000/api/ingest/",
+                    "/api/ingest/",
+                ]
 
             for api_url in api_urls:
                 try:
