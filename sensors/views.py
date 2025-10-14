@@ -7,11 +7,34 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import SensorReading
+from .ttn_poller import fetch_recent_ttn_data
+
+# Simple module-level last-poll timestamp to avoid heavy polling on every request
+_last_ttn_poll = 0
+import os
+import time
+import logging
 import json
 import csv
 
 
 def dashboard(request: HttpRequest):
+    # Run on-demand TTN poller at most once every N minutes as a fallback when worker isn't running
+    global _last_ttn_poll
+    try:
+        now_ts = int(time.time())
+        poll_interval = int(os.getenv("TTN_POLL_INTERVAL_MIN", "5")) * 60
+        if now_ts - _last_ttn_poll > poll_interval:
+            inserted = fetch_recent_ttn_data(
+                minutes=int(os.getenv("TTN_POLL_INTERVAL_MIN", "5"))
+            )
+            if inserted:
+                _last_ttn_poll = now_ts
+    except Exception:
+        # Don't let polling failures break the dashboard
+        logger = logging.getLogger(__name__)
+        logger.exception("TTN poller failure")
+
     # Get latest readings
     readings = SensorReading.objects.order_by("-received_at")[:50]
 

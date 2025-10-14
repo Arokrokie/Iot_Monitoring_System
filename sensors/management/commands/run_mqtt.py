@@ -56,17 +56,19 @@ class Command(BaseCommand):
                         "device_id", device_id
                     ),
                     "received_at": payload.get("received_at"),
-                    "battery_voltage": decoded.get("field1"),
-                    "humidity": decoded.get("field3"),
-                    "motion_count": decoded.get("field4"),
-                    "temperature": decoded.get("field5"),
+                    "field1": decoded.get("field1"),
+                    "field3": decoded.get("field3"),
+                    "field4": decoded.get("field4"),
+                    "field5": decoded.get("field5"),
                 }
 
                 # Post to Django API
                 response = requests.post(ingest_url, json=data, timeout=10)
 
                 if response.status_code in [200, 201]:
-                    logger.info(f"✅ Data posted to API")
+                    logger.info(
+                        f"✅ Data posted to API: {response.status_code} - {response.text}"
+                    )
                 else:
                     logger.error(
                         f"❌ API error: {response.status_code} - {response.text}"
