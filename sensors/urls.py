@@ -9,5 +9,6 @@ urlpatterns = [
     path("history/", views.history, name="history"),
     path("device/<str:device_id>/", views.device_detail, name="device_detail"),
     path("api/ingest/", views.ingest_reading, name="ingest_reading"),
+    path("api/fetch-data/", views.fetch_data_endpoint, name="fetch_data"),
     path("api/reading/<int:reading_id>/", views.reading_detail, name="reading_detail"),
 ]

@@ -583,6 +583,31 @@ def reading_detail(request: HttpRequest, reading_id: int):
 
 
 @csrf_exempt
+def fetch_data_endpoint(request: HttpRequest):
+    """API endpoint for external cron services to trigger data fetching"""
+    if request.method == "POST":
+        from django.core.management import call_command
+        from io import StringIO
+        import sys
+
+        # Capture output
+        out = StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = out
+
+        try:
+            call_command("fetch_sensor_data")
+            result = out.getvalue()
+            return JsonResponse({"status": "success", "message": result})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+        finally:
+            sys.stdout = old_stdout
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)
+
+
+@csrf_exempt
 def ingest_reading(request: HttpRequest):
     if request.method != "POST":
         return JsonResponse({"detail": "Method not allowed"}, status=405)

@@ -1,0 +1,4 @@
+# Data Collector Service Procfile
+# Use this for a separate Railway service dedicated to data collection
+
+data-collector: python data_collector_service.py
