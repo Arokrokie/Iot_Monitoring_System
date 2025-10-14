@@ -17,7 +17,9 @@ class Command(BaseCommand):
 
         # Get configuration from environment
         broker = os.getenv("TTN_BROKER", "eu1.cloud.thethings.network")
-        port = int(os.getenv("TTN_PORT", "8883"))  # Use 8883 for TLS
+        port = int(
+            os.getenv("TTN_PORT", "1883")
+        )  # Use 1883 for unencrypted (TTN default)
         username = os.getenv("TTN_USERNAME")
         password = os.getenv("TTN_PASSWORD")
         device_id = os.getenv("TTN_DEVICE_ID")
@@ -83,9 +85,8 @@ class Command(BaseCommand):
         client.on_connect = on_connect
         client.on_message = on_message
 
-        # Enable TLS for secure connection (TTN requires this)
-        if port == 8883:
-            client.tls_set()
+        # Note: TTN uses unencrypted MQTT on port 1883 by default
+        # TLS is available on port 8883 but not required
 
         try:
             client.connect(broker, port, 60)

@@ -1,2 +1,1 @@
-web: python manage.py migrate && gunicorn iot_dashboard.wsgi:application --bind 0.0.0.0:$PORT
-worker: python manage.py run_mqtt
+web: python manage.py migrate && python manage.py fetch_sensor_data && gunicorn iot_dashboard.wsgi:application --bind 0.0.0.0:$PORT

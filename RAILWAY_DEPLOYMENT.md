@@ -47,7 +47,7 @@ Railway will auto-create a web service. Set these environment variables:
 | ------------------- | ---------------------------------------------------------------------------------------------------- |
 | `IOT_INGEST_URL`    | `https://your-app-name.up.railway.app/api/ingest/`                                                   |
 | `TTN_BROKER`        | `eu1.cloud.thethings.network`                                                                        |
-| `TTN_PORT`          | `8883`                                                                                               |
+| `TTN_PORT`          | `1883`                                                                                               |
 | `TTN_USERNAME`      | `bd-test-app2@ttn`                                                                                   |
 | `TTN_PASSWORD`      | `NNSXS.NGFSXX4UXDX55XRIDQZS6LPR4OJXKIIGSZS56CQ.6O4WUAUHFUAHSTEYRWJX6DDO7TL2IBLC7EV2LS4EHWZOOEPCEUOA` |
 | `TTN_DEVICE_ID`     | `lht65n-01-temp-humidity-sensor`                                                                     |
@@ -75,7 +75,7 @@ export IOT_INGEST_URL=http://localhost:8000/api/ingest/
 export TTN_USERNAME=bd-test-app2@ttn
 export TTN_PASSWORD=NNSXS.NGFSXX4UXDX55XRIDQZS6LPR4OJXKIIGSZS56CQ.6O4WUAUHFUAHSTEYRWJX6DDO7TL2IBLC7EV2LS4EHWZOOEPCEUOA
 export TTN_DEVICE_ID=lht65n-01-temp-humidity-sensor
-export TTN_PORT=8883
+export TTN_PORT=1883
 
 # Run MQTT worker
 python manage.py run_mqtt
