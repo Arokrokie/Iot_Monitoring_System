@@ -105,8 +105,8 @@ def start_mqtt_listener():
                 "received_at": payload.get("received_at"),
                 "battery_voltage": decoded.get("field1"),
                 "humidity": decoded.get("field3"),
-                "motion_count": decoded.get("field4"),
-                "temperature": decoded.get("field5"),
+                "motion_counts": decoded.get("field4"),
+                "temperature_c": decoded.get("field5"),
             }
 
             logger.info(f"📊 Sensor data: {data}")
@@ -122,7 +122,13 @@ def start_mqtt_listener():
             for api_url in api_urls:
                 try:
                     response = requests.post(api_url, json=data, timeout=5)
-                    if response.status_code == 200:
+                    logger.info(
+                        f"API {api_url} responded: {response.status_code} - {response.text}"
+                    )
+                    print(
+                        f"API {api_url} responded: {response.status_code} - {response.text}"
+                    )
+                    if response.status_code in (200, 201):
                         logger.info(f"✅ Data posted successfully to {api_url}")
                         print(f"✅ Data posted successfully to {api_url}")
                         break

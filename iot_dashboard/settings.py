@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "sensors",
+    # Ensure the project AppConfig runs so background MQTT service is started
+    "iot_dashboard.apps.IotDashboardConfig",
 ]
 
 MIDDLEWARE = [
