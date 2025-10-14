@@ -3,6 +3,25 @@
 {% block page_title %}Devices{% endblock %}
 
 {% block content %}
+<!-- Auto-refresh every 30 seconds -->
+<script>
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+</script>
+<!-- Manual Refresh Button -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="fas fa-microchip me-2"></i>Connected Devices</h2>
+            <button class="btn btn-primary" onclick="location.reload()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+        </div>
+        <small class="text-muted">Page auto-refreshes every 30 seconds</small>
+    </div>
+</div>
+
 <!-- Device Status Overview -->
 <div class="row mb-4">
     <div class="col-md-4 mb-3">
@@ -119,7 +138,10 @@
                         </td>
                         <td>
                             {% if device.last_seen %}
-                                <small class="text-muted">{{ device.last_seen|timesince }} ago</small>
+                                <small class="text-muted">
+                                    {{ device.last_seen|timesince }} ago<br>
+                                    <span class="text-info">{{ device.last_seen|date:"M d, H:i:s" }}</span>
+                                </small>
                             {% else %}
                                 <span class="text-muted">Never</span>
                             {% endif %}
