@@ -1,92 +1,118 @@
-# 🌡️ IoT Sensor Monitoring System
+# IoT Monitoring System 🌡️📊
 
-A comprehensive real-time IoT sensor monitoring dashboard built with Django, designed to collect, visualize, and analyze data from LoRaWAN sensors via The Things Network (TTN). The system features a modern, responsive web interface with real-time charts, analytics, and data export capabilities.
+A real-time IoT sensor monitoring and analytics dashboard built with Django. This system collects, stores, and visualizes environmental sensor data from LoRaWAN devices connected via The Things Network (TTN).
 
-## 🚀 Features
+## 🎯 Project Overview
+
+The IoT Monitoring System provides a comprehensive web-based platform for monitoring environmental sensors in real-time. It ingests data from LoRa-enabled sensors (temperature, humidity, motion, battery) via MQTT and presents the information through an intuitive dashboard with historical analytics and data export capabilities.
+
+### Key Capabilities:
+- **Real-time Data Collection**: Automatic sensor data ingestion via MQTT from TTN
+- **Live Dashboard**: Monitor current sensor readings and device status
+- **Analytics & Insights**: Historical data analysis with interactive charts
+- **Device Management**: Track multiple IoT devices and their health status
+- **Data Export**: Export sensor readings in CSV and JSON formats
+- **RESTful API**: Programmatic access to sensor data
+
+## ✨ Features
 
 ### 📊 Real-time Dashboard
-- **Live Metrics Display**: Real-time visualization of temperature, humidity, battery voltage, and motion detection
-- **Interactive Charts**: Dynamic Chart.js visualizations showing 24-hour trends
-- **Device Status Overview**: Monitor all connected devices at a glance
-- **Responsive Design**: Mobile-friendly interface with Bootstrap 5
+- Live sensor metrics (Temperature, Humidity, Battery, Motion)
+- Device status overview (online/offline tracking)
+- 24-hour trend charts
+- Recent readings table with auto-refresh
 
 ### 📈 Analytics & Insights
-- **Statistical Analysis**: Average, min, max calculations for all sensor metrics
-- **Historical Trends**: Analyze data patterns over custom date ranges
-- **Daily Activity Charts**: Visualize reading frequency and device activity
-- **Temperature Distribution**: Histogram showing temperature patterns
-- **Combined Time Series**: Overlay temperature and humidity trends
+- Temperature and humidity statistics (avg, min, max)
+- Daily reading counts and trends
+- Temperature distribution analysis
+- Battery level monitoring
+- Motion detection analytics
+- Hourly data aggregation
 
 ### 🔧 Device Management
-- **Multi-device Support**: Monitor multiple LoRaWAN sensors simultaneously
-- **Device Health Monitoring**: Track battery levels and connectivity status
-- **Individual Device Views**: Detailed pages for each sensor with complete history
-- **Device Statistics**: Total readings, averages, and latest updates per device
+- Multi-device support
+- Device health monitoring (last seen, online status)
+- Per-device statistics and readings
+- Device detail views with historical data
 
-### 📁 Data Export & History
-- **Export Formats**: Download data in CSV or JSON format
-- **Advanced Filtering**: Filter by device, date range, and custom queries
-- **Quick Statistics**: View summary stats for filtered data
-- **Pagination**: Efficiently browse through thousands of readings
+### 💾 Data Export & History
+- Filter readings by device and date range
+- Export to CSV or JSON formats
+- Paginated historical data view
+- Statistical summaries
 
 ### 🔌 Data Ingestion
-- **MQTT Integration**: Real-time data collection from TTN MQTT broker
-- **REST API Endpoint**: `/api/ingest/` for programmatic data submission
-- **TTN Poller**: Fetch historical data from The Things Network API
-- **Automatic Reconnection**: Resilient MQTT connection with auto-retry
+- **MQTT Listener**: Real-time data collection from TTN
+- **REST API**: Manual data ingestion endpoint
+- **TTN Poller**: Fallback polling service
+- Automatic data deduplication
 
 ## 🏗️ Architecture
 
 ### Technology Stack
-- **Backend**: Django 5.2.6 with Python 3.x
-- **Database**: PostgreSQL (production) / SQLite (development)
+- **Backend**: Django 5.2.6 (Python)
+- **Database**: SQLite (development) / PostgreSQL (production)
+- **MQTT Client**: Paho MQTT
 - **Frontend**: Bootstrap 5, Chart.js, Font Awesome
-- **MQTT Client**: Paho-MQTT
-- **Deployment**: Railway.app with dual-service architecture
+- **Deployment**: Railway, Render (WSGI: Gunicorn)
+- **IoT Platform**: The Things Network (TTN)
 
 ### System Components
 
-1. **Web Service** (`web`)
-   - Serves the Django application
-   - Provides REST API endpoints
-   - Renders dashboard, analytics, and device views
-   - Handles data queries and exports
-
-2. **Worker Service** (`worker`)
-   - Runs MQTT listener for real-time data ingestion
-   - Connects to TTN MQTT broker
-   - Processes uplink messages and posts to web API
-   - Maintains persistent connection with auto-reconnect
-
-3. **Database**
-   - Stores sensor readings with timestamps
-   - Indexed fields for efficient queries
-   - Supports multiple device IDs
+```
+┌─────────────────┐
+│  LoRa Sensors   │ (Temperature, Humidity, Motion)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  The Things     │ (LoRaWAN Network Server)
+│  Network (TTN)  │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  MQTT Broker    │ (eu1.cloud.thethings.network)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────────────────────┐
+│      IoT Monitoring System          │
+│  ┌──────────────┐  ┌──────────────┐ │
+│  │ MQTT Worker  │  │  Web Service │ │
+│  │ (Listener)   │  │  (Dashboard) │ │
+│  └──────┬───────┘  └───────▲──────┘ │
+│         │                  │        │
+│         ▼                  │        │
+│  ┌─────────────────────────┴─────┐  │
+│  │    PostgreSQL Database        │  │
+│  │  (SensorReading Model)        │  │
+│  └───────────────────────────────┘  │
+└─────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Web Browser   │ (Dashboard UI)
+└─────────────────┘
+```
 
 ### Data Flow
-```
-LoRaWAN Sensor → TTN Network Server → MQTT Broker
-                                           ↓
-                                    MQTT Worker Service
-                                           ↓
-                                   POST /api/ingest/
-                                           ↓
-                                    Django Web Service
-                                           ↓
-                                    PostgreSQL Database
-                                           ↓
-                                    Dashboard Visualization
-```
+1. **Sensors** → Transmit data via LoRa
+2. **TTN** → Receives and decodes LoRa packets
+3. **MQTT Broker** → Publishes sensor data to topic
+4. **MQTT Worker** → Subscribes to topic and receives messages
+5. **Ingest API** → Processes and stores data in database
+6. **Web Dashboard** → Queries database and displays visualizations
 
-## 📦 Installation & Setup
+## 🚀 Getting Started
 
 ### Prerequisites
 - Python 3.8+
-- pip and virtualenv
-- The Things Network account with configured LoRaWAN device(s)
-- TTN API credentials
+- pip
+- Git
 
-### Local Development Setup
+### Local Installation
 
 1. **Clone the repository**
 ```bash
@@ -94,167 +120,153 @@ git clone https://github.com/Arokrokie/Iot_Monitoring_System.git
 cd Iot_Monitoring_System
 ```
 
-2. **Create and activate virtual environment**
+2. **Create virtual environment and install dependencies**
 ```bash
 python -m venv .venv
 
 # Windows
 .\.venv\Scripts\activate
+.\.venv\Scripts\pip install -r requirements.txt
 
 # Linux/Mac
 source .venv/bin/activate
-```
-
-3. **Install dependencies**
-```bash
 pip install -r requirements.txt
 ```
 
-4. **Apply database migrations**
+3. **Apply database migrations**
 ```bash
 python manage.py migrate
 ```
 
-5. **Create superuser (optional)**
+4. **Create admin user**
 ```bash
 python manage.py createsuperuser --username admin --email admin@example.com
 ```
 
-6. **Run the development server**
+5. **Run the development server**
 ```bash
 python manage.py runserver 0.0.0.0:8000
 ```
 
-7. **Access the application**
+6. **Access the application**
 - Dashboard: `http://127.0.0.1:8000/`
 - Admin Panel: `http://127.0.0.1:8000/admin/`
 
-### Running MQTT Listener Locally
+### Running the MQTT Listener
 
-**Terminal 1 - Django Server:**
-```bash
-python manage.py runserver
-```
+In a separate terminal (keep Django server running):
 
-**Terminal 2 - MQTT Worker:**
 ```bash
 # Set environment variables
 export IOT_INGEST_URL=http://localhost:8000/api/ingest/
-export TTN_BROKER=eu1.cloud.thethings.network
-export TTN_PORT=1883
-export TTN_USERNAME=your-ttn-app@ttn
+export TTN_USERNAME=your-ttn-username@ttn
 export TTN_PASSWORD=your-ttn-api-key
 export TTN_DEVICE_ID=your-device-id
+export TTN_PORT=1883
 
 # Run MQTT worker
 python manage.py run_mqtt
 ```
 
-**Terminal 3 - Verify Data (optional):**
+### Verify Data Collection
+
 ```bash
 python check_data.py
 ```
 
-## 🚂 Railway Deployment
+## 🌐 Deployment (Railway)
 
-This project is configured for deployment on Railway.app with separate web and worker services.
+### Step 1: Create Railway Project
+1. Go to [railway.app](https://railway.app)
+2. Sign up/login with GitHub
+3. Click "New Project" → "Deploy from GitHub repo"
+4. Connect your repository
 
-### Quick Deployment Steps
+### Step 2: Configure Web Service
 
-1. **Create Railway Project**
-   - Connect your GitHub repository
-   - Railway will auto-detect Django app
+Set these environment variables in Railway:
 
-2. **Configure Web Service**
-   - Service type: Web
-   - Build command: Auto-detected
-   - Start command: Defined in `Procfile`
+| Variable | Value |
+|----------|-------|
+| `DJANGO_SECRET_KEY` | Your Django secret key |
+| `DEBUG` | `False` |
+| `ALLOWED_HOSTS` | `*.up.railway.app,localhost,127.0.0.1` |
+| `DATABASE_URL` | Auto-provided by Railway |
 
-3. **Create Worker Service**
-   - Service type: Worker
-   - Same repository
-   - Runs `python manage.py run_mqtt`
+### Step 3: Create Worker Service
 
-4. **Set Environment Variables**
+1. Click "New Service" → "Empty Service"
+2. Connect to same GitHub repository
+3. Settings → Service Type → Select "Worker"
+4. Add environment variables:
 
-Required variables for both services:
-```
-DJANGO_SECRET_KEY=your-secret-key
-DEBUG=False
-ALLOWED_HOSTS=*.up.railway.app,localhost,127.0.0.1
-```
+| Variable | Value |
+|----------|-------|
+| `IOT_INGEST_URL` | `https://your-app.up.railway.app/api/ingest/` |
+| `TTN_BROKER` | `eu1.cloud.thethings.network` |
+| `TTN_PORT` | `1883` |
+| `TTN_USERNAME` | Your TTN app username |
+| `TTN_PASSWORD` | Your TTN API key |
+| `TTN_DEVICE_ID` | Your device ID |
 
-Additional variables for worker service:
-```
-IOT_INGEST_URL=https://your-app.up.railway.app/api/ingest/
-TTN_BROKER=eu1.cloud.thethings.network
-TTN_PORT=1883
-TTN_USERNAME=your-ttn-app@ttn
-TTN_PASSWORD=your-ttn-api-key
-TTN_DEVICE_ID=your-device-id
-TTN_APP_ID=your-ttn-app-id
-TTN_API_KEY=your-ttn-api-key
-```
+See [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md) for detailed deployment instructions.
 
-5. **Deploy**
-   - Both services will deploy automatically
-   - Monitor logs for successful connections
+## 📡 API Documentation
 
-For detailed deployment instructions, see [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md).
+### Data Ingestion Endpoint
 
-## 📚 API Endpoints
+**POST** `/api/ingest/`
 
-### POST /api/ingest/
-Ingest sensor reading from MQTT or external sources.
+Accepts sensor readings in JSON format.
 
 **Request Body:**
 ```json
 {
   "device_id": "lht65n-01-temp-humidity-sensor",
-  "temperature_c": 23.5,
-  "humidity": 65.2,
+  "received_at": "2026-01-19T10:30:00Z",
   "battery_voltage": 3.6,
-  "motion_counts": 12,
-  "received_at": "2026-01-19T10:30:00Z"
+  "humidity": 65.5,
+  "motion_counts": 5,
+  "temperature_c": 22.3
 }
 ```
-
-**Response:** `201 Created`
-
-### GET /api/reading/{reading_id}/
-Retrieve detailed information for a specific sensor reading.
 
 **Response:**
 ```json
 {
-  "id": 123,
-  "device_id": "lht65n-01-temp-humidity-sensor",
-  "temperature_c": 23.5,
-  "humidity": 65.2,
-  "battery_voltage": 3.6,
-  "motion_counts": 12,
-  "received_at": "2026-01-19T10:30:00Z",
-  "created_at": "2026-01-19T10:30:05Z"
+  "status": "success",
+  "id": 123
 }
 ```
 
-### POST /api/fetch-data/
-Manually trigger TTN historical data fetch.
+### Get Reading Details
+
+**GET** `/api/reading/<id>/`
+
+Returns detailed information about a specific sensor reading.
+
+### Fetch TTN Data
+
+**POST** `/api/fetch-data/`
+
+Manually trigger data fetch from TTN API.
 
 ## 📊 Data Model
 
-### SensorReading
+### SensorReading Model
+
 | Field | Type | Description |
 |-------|------|-------------|
-| `device_id` | CharField(128) | Unique device identifier (indexed) |
-| `temperature_c` | FloatField | Temperature in Celsius |
-| `humidity` | FloatField | Relative humidity percentage |
-| `battery_voltage` | FloatField | Battery voltage in volts |
+| `device_id` | CharField(128) | Unique device identifier |
+| `battery_voltage` | FloatField | Battery voltage (V) |
+| `humidity` | FloatField | Relative humidity (%) |
 | `motion_counts` | IntegerField | Motion detection count |
-| `received_at` | DateTimeField | Timestamp from sensor (indexed) |
-| `created_at` | DateTimeField | Database insert timestamp |
+| `temperature_c` | FloatField | Temperature (°C) |
+| `received_at` | DateTimeField | Timestamp from sensor |
+| `created_at` | DateTimeField | Database insertion time |
 
 ### TTN Field Mapping
+
 | TTN Field | Database Field | Description |
 |-----------|----------------|-------------|
 | `field1` | `battery_voltage` | Battery voltage |
@@ -262,79 +274,83 @@ Manually trigger TTN historical data fetch.
 | `field4` | `motion_counts` | Motion detection count |
 | `field5` | `temperature_c` | Temperature in Celsius |
 
-## 🔍 Monitoring & Troubleshooting
+## 🛠️ Management Commands
 
-### Check Data Ingestion
+### Run MQTT Listener
+```bash
+python manage.py run_mqtt
+```
+
+### Fetch Sensor Data from TTN
+```bash
+python manage.py fetch_sensor_data
+```
+
+### Check Database Data
 ```bash
 python check_data.py
 ```
 
-### View MQTT Logs
-```bash
-# Railway: Check worker service logs
-# Local: Check terminal running run_mqtt command
-```
+## 📁 Project Structure
 
-### Common Issues
-
-**No data appearing:**
-- Verify TTN credentials are correct
-- Check `IOT_INGEST_URL` points to correct web service
-- Ensure MQTT worker is running
-- Verify device is transmitting
-
-**MQTT connection failures:**
-- Check TTN broker address and port
-- Verify username/password format
-- Ensure network allows MQTT connections
-- Check Railway worker logs
-
-**Database issues:**
-- Run migrations: `python manage.py migrate`
-- Check database permissions
-- Verify DATABASE_URL if using external DB
-
-## 🛠️ Development
-
-### Project Structure
 ```
 Iot_Monitoring_System/
 ├── iot_dashboard/          # Django project settings
-│   ├── settings.py
-│   ├── urls.py
-│   ├── mqtt_service.py     # MQTT listener logic
-│   └── apps.py
-├── sensors/                # Main app
+│   ├── settings.py         # Configuration
+│   ├── urls.py             # URL routing
+│   ├── wsgi.py             # WSGI entry point
+│   ├── apps.py             # App configuration
+│   └── mqtt_service.py     # MQTT client implementation
+├── sensors/                # Main application
 │   ├── models.py           # SensorReading model
-│   ├── views.py            # Dashboard, analytics, API views
-│   ├── urls.py
-│   ├── admin.py
+│   ├── views.py            # Dashboard views
+│   ├── urls.py             # URL patterns
+│   ├── admin.py            # Django admin config
+│   ├── ttn_poller.py       # TTN API poller
 │   ├── templates/          # HTML templates
-│   ├── management/
-│   │   └── commands/
-│   │       └── run_mqtt.py # MQTT worker command
-│   └── ttn_poller.py       # TTN API integration
-├── data_collector_service.py # Standalone data collector
+│   │   └── sensors/
+│   │       ├── dashboard.html
+│   │       ├── analytics.html
+│   │       ├── devices.html
+│   │       ├── history.html
+│   │       └── base.html
+│   └── management/
+│       └── commands/
+│           └── run_mqtt.py # MQTT worker command
+├── data_collector_service.py  # Standalone data collector
 ├── check_data.py           # Database verification script
-├── requirements.txt
-├── Procfile               # Railway deployment config
-└── README.md
+├── Procfile                # Railway/Heroku deployment config
+├── requirements.txt        # Python dependencies
+├── RAILWAY_DEPLOYMENT.md   # Deployment guide
+└── README.md               # This file
 ```
 
-### Available Management Commands
+## 🔧 Troubleshooting
 
-```bash
-# Run MQTT listener
-python manage.py run_mqtt
+### MQTT Worker Not Connecting
+- Verify TTN credentials are correct
+- Check `TTN_USERNAME` format: `app-name@ttn`
+- Ensure `TTN_PASSWORD` is a valid API key
+- Check Railway worker logs for errors
 
-# Fetch historical data from TTN
-python manage.py fetch_sensor_data
+### No Data in Dashboard
+- Verify `IOT_INGEST_URL` points to correct web service
+- Test API endpoint: `curl https://your-app.up.railway.app/api/ingest/`
+- Run `python check_data.py` to verify database
+- Check MQTT worker is running and connected
 
-# Standard Django commands
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py collectstatic
-```
+### Database Issues
+- Ensure migrations are applied: `python manage.py migrate`
+- Check database permissions in Railway
+- Verify `DATABASE_URL` environment variable
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## 📝 License
 
@@ -344,16 +360,13 @@ This project is open source and available for educational and commercial use.
 
 **Arokrokie**
 - GitHub: [@Arokrokie](https://github.com/Arokrokie)
-- Project: [Iot_Monitoring_System](https://github.com/Arokrokie/Iot_Monitoring_System)
 
-## 🤝 Contributing
+## 🙏 Acknowledgments
 
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
-
-## 📞 Support
-
-For questions or support, please open an issue in the GitHub repository.
+- The Things Network for LoRaWAN infrastructure
+- Django community for the excellent web framework
+- Bootstrap and Chart.js for UI components
 
 ---
 
-**Built with ❤️ using Django, LoRaWAN, and The Things Network**
+**Built with ❤️ for IoT monitoring and analytics**
